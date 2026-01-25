@@ -1,7 +1,7 @@
-AimAssist
+Aimbot
 Slider:0:180
 Number:10:100
-github.com/user/script1.lua
+raw.githubusercontent.com/seambad/robloxscript/refs/heads/main/aimbot.lua
 
 Triggerbot
 List:Auto:Semi:Manual
