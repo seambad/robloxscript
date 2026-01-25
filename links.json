@@ -1,1 +1,19 @@
-
+{{{
+AimAssist
+Slider:0:180
+Category:Rage
+github.com/script/link
+}}}
+{{{
+Chams
+List:Glow:Flat:Wireframe
+Category:Visuals
+github.com/script/link2
+}}}
+{{{
+Speed Hack
+Number:16:200
+Text:CustomMessage
+Category:Misc
+github.com/script/link3
+}}}
