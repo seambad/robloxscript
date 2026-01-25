@@ -1,0 +1,9 @@
+AimAssist
+Slider:0:180
+Number:10:100
+github.com/user/script1.lua
+
+Triggerbot
+List:Auto:Semi:Manual
+Text:Text here
+Link:github.com/user/script2.lua
