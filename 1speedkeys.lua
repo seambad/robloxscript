@@ -5,9 +5,32 @@ local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
 -- Координаты для телепортации
-local farmPosition = Vector3.new(-2032.1, 541.2, -1626.6)
+local farmPosition = Vector3.new(2035.0, 542.5, -1627.0)
 local autofarmEnabled = false
 local autofarmLoop = nil
+local farmCount = 0
+
+-- ===============================
+-- АНТИ-AFK СИСТЕМА
+-- ===============================
+local VirtualUser = game:GetService("VirtualUser")
+
+-- Отключаем стандартный AFK кик
+player.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-- Дополнительная защита от AFK
+spawn(function()
+    while wait(300) do -- Каждые 5 минут
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end
+end)
+
+print("✅ Анти-AFK активирован!")
+-- ===============================
 
 -- Создание GUI
 local screenGui = Instance.new("ScreenGui")
@@ -18,8 +41,8 @@ screenGui.Parent = player.PlayerGui
 -- Главное окно
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 300, 0, 180)
-mainFrame.Position = UDim2.new(0.5, -150, 0.5, -90)
+mainFrame.Size = UDim2.new(0, 300, 0, 240)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -120)
 mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
@@ -78,11 +101,33 @@ statusLabel.TextSize = 14
 statusLabel.Font = Enum.Font.Gotham
 statusLabel.Parent = mainFrame
 
+-- Счетчик фарма
+local countLabel = Instance.new("TextLabel")
+countLabel.Size = UDim2.new(1, -40, 0, 25)
+countLabel.Position = UDim2.new(0, 20, 0, 95)
+countLabel.BackgroundTransparency = 1
+countLabel.Text = "Телепортаций: 0 | Получено: 0"
+countLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+countLabel.TextSize = 12
+countLabel.Font = Enum.Font.Gotham
+countLabel.Parent = mainFrame
+
+-- Отображение координат
+local coordsLabel = Instance.new("TextLabel")
+coordsLabel.Size = UDim2.new(1, -40, 0, 25)
+coordsLabel.Position = UDim2.new(0, 20, 0, 120)
+coordsLabel.BackgroundTransparency = 1
+coordsLabel.Text = string.format("X: %.1f | Y: %.1f | Z: %.1f", farmPosition.X, farmPosition.Y, farmPosition.Z)
+coordsLabel.TextColor3 = Color3.fromRGB(100, 150, 255)
+coordsLabel.TextSize = 11
+coordsLabel.Font = Enum.Font.GothamMedium
+coordsLabel.Parent = mainFrame
+
 -- Кнопка Autofarm
 local autofarmBtn = Instance.new("TextButton")
 autofarmBtn.Name = "AutofarmButton"
 autofarmBtn.Size = UDim2.new(0, 260, 0, 50)
-autofarmBtn.Position = UDim2.new(0, 20, 0, 110)
+autofarmBtn.Position = UDim2.new(0, 20, 0, 155)
 autofarmBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 255)
 autofarmBtn.Text = "Autofarm [OFF]"
 autofarmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -94,19 +139,26 @@ local autofarmBtnCorner = Instance.new("UICorner")
 autofarmBtnCorner.CornerRadius = UDim.new(0, 8)
 autofarmBtnCorner.Parent = autofarmBtn
 
--- Функция добавления статистики (измените leaderstats на нужное название)
-local function addStats()
-    -- Попытка найти leaderstats
-    local leaderstats = player:FindFirstChild("leaderstats")
-    if leaderstats then
-        -- Перебираем все статистики и добавляем 3000 к каждой
-        for _, stat in pairs(leaderstats:GetChildren()) do
-            if stat:IsA("IntValue") or stat:IsA("NumberValue") then
-                stat.Value = stat.Value + 3000
-            end
-        end
-    end
-end
+-- Кнопка сброса счетчика
+local resetBtn = Instance.new("TextButton")
+resetBtn.Name = "ResetButton"
+resetBtn.Size = UDim2.new(0, 60, 0, 25)
+resetBtn.Position = UDim2.new(1, -80, 0, 215)
+resetBtn.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+resetBtn.Text = "Сброс"
+resetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+resetBtn.TextSize = 12
+resetBtn.Font = Enum.Font.GothamBold
+resetBtn.Parent = mainFrame
+
+local resetBtnCorner = Instance.new("UICorner")
+resetBtnCorner.CornerRadius = UDim.new(0, 6)
+resetBtnCorner.Parent = resetBtn
+
+resetBtn.MouseButton1Click:Connect(function()
+    farmCount = 0
+    countLabel.Text = "Телепортаций: 0 | Получено: 0"
+end)
 
 -- Функция телепортации
 local function teleportToFarm()
@@ -125,18 +177,16 @@ end
 
 -- Функция автофарма
 local function startAutofarm()
-    autofarmLoop = game:GetService("RunService").Heartbeat:Connect(function()
-        if not autofarmEnabled then
-            if autofarmLoop then
-                autofarmLoop:Disconnect()
-                autofarmLoop = nil
+    spawn(function()
+        while autofarmEnabled do
+            wait(2.3) -- Задержка 0.5 секунды
+            
+            if autofarmEnabled then
+                teleportToFarm()
+                farmCount = farmCount + 1
+                countLabel.Text = string.format("Телепортаций: %d | Получено: %d", farmCount, farmCount * 3000)
             end
-            return
         end
-        
-        wait(0.5) -- Задержка 0.5 секунды
-        teleportToFarm()
-        addStats()
     end)
 end
 
@@ -147,7 +197,7 @@ autofarmBtn.MouseButton1Click:Connect(function()
     if autofarmEnabled then
         autofarmBtn.Text = "Autofarm [ON]"
         autofarmBtn.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
-        statusLabel.Text = "Автофарм активен!"
+        statusLabel.Text = "⚡ Автофарм активен!"
         statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
         
         startAutofarm()
@@ -158,10 +208,6 @@ autofarmBtn.MouseButton1Click:Connect(function()
         statusLabel.Text = "Автофарм выключен"
         statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
         
-        if autofarmLoop then
-            autofarmLoop:Disconnect()
-            autofarmLoop = nil
-        end
         print("Автофарм выключен!")
     end
 end)
@@ -177,7 +223,3 @@ player.CharacterAdded:Connect(function(char)
         startAutofarm()
     end
 end)
-
-print("Autofarm GUI загружен!")
-print("Координаты фарма: X: -2032.1, Y: 541.2, Z: -1626.6")
-print("Телепортация каждые 0.5 секунды с добавлением 3000 к статистике")
